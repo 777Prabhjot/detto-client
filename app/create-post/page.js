@@ -1,12 +1,17 @@
 "use client";
-import React, { useState } from "react";
-import { useMutation, gql } from "@apollo/client";
+import React, { useEffect, useState } from "react";
+import { useMutation, gql, useApolloClient } from "@apollo/client";
+import Toast from "@/components/Toast";
 
 const CreatePost = () => {
   const [values, setValues] = useState({
     title: "",
     description: "",
+    image: "",
   });
+  const [success, setSuccess] = useState("");
+
+  const client = useApolloClient();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,7 +32,7 @@ const CreatePost = () => {
 
   const [newPost, { data, loading, error }] = useMutation(CREATE_POST);
 
-  const handleClick = async (e) => {
+  const handleClick = (e) => {
     e.preventDefault();
 
     newPost({
@@ -35,13 +40,31 @@ const CreatePost = () => {
         input: {
           title: values.title,
           content: values.description,
+          image: values.image,
         },
       },
     });
+
+    client.resetStore();
   };
+
+  useEffect(() => {
+    if (data && !error) {
+      setSuccess("New post created Successfully");
+      setTimeout(() => {
+        setSuccess("");
+        setValues({
+          title: "",
+          image: "",
+          description: "",
+        });
+      }, 2000);
+    }
+  }, [data, error]);
 
   return (
     <div className="container mx-auto py-8">
+      {success && <Toast msg={success} color="#46dd0f" />}
       <h1 className="text-2xl font-bold mb-6 text-center">Create New Post</h1>
       <form className="w-full max-w-sm mx-auto bg-white p-8 rounded-md shadow-md">
         <div className="mb-4">
@@ -56,6 +79,7 @@ const CreatePost = () => {
             type="text"
             id="name"
             name="title"
+            value={values.title}
             placeholder="Enter your Title..."
             onChange={handleChange}
           />
@@ -72,7 +96,25 @@ const CreatePost = () => {
             type="text"
             id="email"
             name="description"
+            value={values.description}
             placeholder="Enter your Description..."
+            onChange={handleChange}
+          />
+        </div>
+        <div className="mb-4">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="image"
+          >
+            Image Url
+          </label>
+          <input
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500"
+            type="text"
+            id="image"
+            name="image"
+            value={values.image}
+            placeholder="Enter your Image url..."
             onChange={handleChange}
           />
         </div>
